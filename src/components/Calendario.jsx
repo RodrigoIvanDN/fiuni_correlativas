@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { limpiarNombre } from "../utils/limpiarNombre";
-import { parseJwt } from "../api";
+import { apiFetch, parseJwt } from "../api";
 import "../styles/calendario.css";
 
 // El backend de la FIUNI agrega un "*" a las materias que son correlativas.
@@ -32,6 +32,18 @@ const MESES_CAL = [...MESES];
 
 // Días de la semana en versión corta (para el mini calendario)
 const DIAS_SEMANA_CAL = ["L", "M", "M", "J", "V", "S", "D"];
+
+function fechaLocalISO(fecha = new Date()) {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  return `${anio}-${mes}-${dia}`;
+}
+
+function obtenerIdentidadUsuario(token) {
+  const payload = parseJwt(token);
+  return payload?.unique_name || payload?.email || payload?.sub || null;
+}
 
 // ─── Iconos y colores para cada tipo de evento ────────────────────────────
 // Cada tipo de evento (parcial, final, feriado, etc.) tiene un emoji y un color
@@ -189,13 +201,15 @@ export default function Calendario({ session }) {
   // Todo se hace en un solo efecto para evitar parpadeos de carga.
   useEffect(() => {
     if (!session?.carreraId) return; // Sin carrera no hay nada que cargar
+    let cancelado = false;
     setLoading(true);
+    setError("");
 
     const cargarDatos = async () => {
       try {
         // 1) Obtener materias desde la API de la FIUNI
-        const { apiFetch } = await import("../api");
         const data = await apiFetch("/materias", { token: session.token });
+        if (cancelado) return;
         const cursando = data
           .filter((m) => m.anho === new Date().getFullYear()) // Solo las del año actual
           .map((m) => ({ ...m, materia: limpiarNombre(m.materia) })); // Limpiar asteriscos
@@ -213,20 +227,23 @@ export default function Calendario({ session }) {
             .is("eliminado_por", null) // Ocultar los eliminados (soft delete)
             .order("fecha", { ascending: true });
 
-          if (eventosError) setError(eventosError.message);
-          else setEventos(eventosData || []);
+          if (eventosError) throw eventosError;
+          if (!cancelado) setEventos(eventosData || []);
         } else {
-          setEventos([]); // Sin materias, sin eventos
+          if (!cancelado) setEventos([]); // Sin materias, sin eventos
         }
       } catch (err) {
-        setError(err.message);
+        if (!cancelado) setError(err.message || "No se pudo cargar el calendario");
       } finally {
-        setLoading(false); // Ocultar spinner
+        if (!cancelado) setLoading(false); // Ocultar spinner
       }
     };
 
     cargarDatos();
-  }, [session.carreraId]); // Se ejecuta al cambiar de carrera (o al montar)
+    return () => {
+      cancelado = true;
+    };
+  }, [session?.carreraId, session?.token]); // Se ejecuta al cambiar de carrera o sesiÃ³n
 
   // ─── SUSCRIPCIÓN EN TIEMPO REAL ────────────────────────────────────────
   // Escucha cambios en la tabla "eventos" (inserciones, actualizaciones, eliminaciones)
@@ -245,27 +262,22 @@ export default function Calendario({ session }) {
           filter: `carrera_id=eq.${session.carreraId}`, // Solo eventos de su carrera
         },
         (payload) => {
-          const ev = payload.new || payload.old;
-          // Solo procesar si el evento pertenece a una de las materias del usuario
-          if (ev && materiasIds.includes(ev.materia_id)) {
-            if (payload.eventType === "INSERT") {
-              if (!payload.new.eliminado_por)
-                // Ignorar si ya viene marcado como eliminado
-                setEventos((prev) => [...prev, payload.new]);
-            } else if (payload.eventType === "UPDATE") {
-              if (payload.new.eliminado_por)
-                setEventos((prev) =>
-                  prev.filter((e) => e.id !== payload.new.id),
-                );
-              // Soft delete
-              else
-                setEventos((prev) =>
-                  prev.map((e) => (e.id === payload.new.id ? payload.new : e)),
-                );
-            } else if (payload.eventType === "DELETE") {
-              setEventos((prev) => prev.filter((e) => e.id !== payload.old.id)); // Borrado real
-            }
+          if (payload.eventType === "DELETE") {
+            setEventos((prev) => prev.filter((e) => e.id !== payload.old.id));
+            return;
           }
+
+          const evento = payload.new;
+          const perteneceAMateria = materiasIds.includes(evento.materia_id);
+          setEventos((prev) => {
+            if (!perteneceAMateria || evento.eliminado_por) {
+              return prev.filter((e) => e.id !== evento.id);
+            }
+            const existe = prev.some((e) => e.id === evento.id);
+            return existe
+              ? prev.map((e) => (e.id === evento.id ? evento : e))
+              : [...prev, evento];
+          });
         },
       )
       .subscribe();
@@ -281,15 +293,23 @@ export default function Calendario({ session }) {
   // "calendario_academico" y se muestran a todos los estudiantes de la carrera.
   useEffect(() => {
     if (!session?.carreraId) return;
+    let cancelado = false;
     const cargarOficiales = async () => {
-      const { data } = await supabase
+      const { data, error: eventosOficialesError } = await supabase
         .from("calendario_academico")
         .select("*")
         .or(`carrera_id.is.null,carrera_id.eq.${session.carreraId}`); // Todas las carreras o la suya
-      if (data) setEventosOficiales(data);
+      if (eventosOficialesError) {
+        if (!cancelado) setError(eventosOficialesError.message);
+        return;
+      }
+      if (!cancelado) setEventosOficiales(data || []);
     };
     cargarOficiales();
-  }, [session.carreraId]);
+    return () => {
+      cancelado = true;
+    };
+  }, [session?.carreraId]);
 
   // ─── NAVEGACIÓN DEL CALENDARIO ──────────────────────────────────────────
   // Funciones para cambiar el mes/semana visible y volver a "hoy".
@@ -388,8 +408,8 @@ export default function Calendario({ session }) {
   const handleGuardarEvento = async (datosEvento) => {
     try {
       // Extraemos el correo real del token (campo unique_name)
-      const payload = parseJwt(session.token);
-      const creador = payload?.unique_name || session.token; // fallback al token si no existe
+      const creador = obtenerIdentidadUsuario(session.token);
+      if (!creador) throw new Error("No se pudo identificar al usuario autenticado");
 
       if (eventoEditando) {
         const { error } = await supabase
@@ -429,13 +449,14 @@ export default function Calendario({ session }) {
   const handleEliminarEvento = async (eventoId) => {
     if (!confirm("¿Estás seguro de eliminar este evento?")) return;
     try {
-      const payload = parseJwt(session.token);
-      const eliminador = payload?.unique_name || session.token;
+      const eliminador = obtenerIdentidadUsuario(session.token);
+      if (!eliminador) throw new Error("No se pudo identificar al usuario autenticado");
 
-      await supabase
+      const { error: eliminarError } = await supabase
         .from("eventos")
         .update({ eliminado_por: eliminador }) // ← correo real extraído del token
         .eq("id", eventoId);
+      if (eliminarError) throw eliminarError;
 
       setMostrarModal(false);
       setEventoEditando(null);
@@ -1024,7 +1045,6 @@ export default function Calendario({ session }) {
             setMostrarModal(false);
             setEventoEditando(null);
           }}
-          session={session}
         />
       )}
 
@@ -1160,7 +1180,7 @@ export default function Calendario({ session }) {
 // ─── COMPONENTE MODAL DE EVENTO ──────────────────────────────────────────
 // Subcomponente que maneja el formulario de creación/edición de un evento.
 // Incluye un mini calendario para seleccionar la fecha sin escribir manualmente.
-function ModalEvento({ evento, materias, onSave, onDelete, onClose, session }) {
+function ModalEvento({ evento, materias, onSave, onDelete, onClose }) {
   // Estado del formulario, inicializado con los datos del evento si se está editando
   const [form, setForm] = useState({
     titulo: evento?.titulo || "",
@@ -1170,7 +1190,7 @@ function ModalEvento({ evento, materias, onSave, onDelete, onClose, session }) {
     tipo: evento?.tipo || "parcial",
     fecha: evento?.fecha
       ? new Date(evento.fecha).toISOString().slice(0, 10) // YYYY-MM-DD
-      : new Date().toISOString().slice(0, 10),
+      : fechaLocalISO(),
   });
   const [error, setError] = useState(""); // Error de validación
   const [saving, setSaving] = useState(false); // Para deshabilitar el botón mientras guarda

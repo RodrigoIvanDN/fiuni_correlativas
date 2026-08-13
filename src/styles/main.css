@@ -260,6 +260,7 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex: 0 0 auto;
 }
 
 .header-nombre {
@@ -270,6 +271,14 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (min-width: 769px) {
+  .header-nombre {
+    min-width: max-content;
+    overflow: visible;
+    text-overflow: clip;
+  }
 }
 
 /*menu del perfile*/
