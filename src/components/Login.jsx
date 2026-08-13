@@ -16,7 +16,7 @@ export default function Login({ onLogin }) {
       const data = await apiFetch("/auth/login", {
         method: "POST",
         body: { email, password: pass },
-		skipAuthRedirect: true //configuracion para evitar la redireccion automatica, quieremos recibir el codigo http antes de que vuelva a cargar
+    		skipAuthRedirect: true //configuracion para evitar la redireccion automatica, quieremos recibir el codigo http antes de que vuelva a cargar
       });
       storage.set("session", data);
       onLogin(data);
@@ -37,7 +37,7 @@ export default function Login({ onLogin }) {
     }
   }
 
-  return (
+return (
     <div className="login-wrap">
       <div
         style={{
@@ -49,8 +49,12 @@ export default function Login({ onLogin }) {
         <ToggleTema />
       </div>
       <div className="login-card">
-        <div className="login-logo">FIUNI Correlativas</div>
+        <div className="login-mark" />
+        <div className="login-logo"><span>FIUNI</span> Integral 2.0</div>
+        <p className="login-sub">Ingresa con tu cuenta institucional</p>
+
         <form onSubmit={handleLogin}>
+
           <div className="field">
             <label>Correo institucional</label>
             <input
@@ -68,14 +72,16 @@ export default function Login({ onLogin }) {
               type="password"
               value={pass}
               onChange={(e) => setPass(e.target.value)}
-              placeholder="********"
+              placeholder="Ingresa tu contraseña"
               required
             />
           </div>
+
           <button className="btn-primary" type="submit" disabled={loading}>
             {loading ? "Ingresando..." : "Ingresar"}
           </button>
-          {error && <div className="error-msg"> {error}</div>}
+
+          {error && <div className="error-msg">{error}</div>}
         </form>
       </div>
     </div>

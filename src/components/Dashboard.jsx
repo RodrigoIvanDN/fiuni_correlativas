@@ -83,7 +83,7 @@ export default function Dashboard({ session }) {
                 textTransform: "uppercase",
                 letterSpacing: "3px",
                 color: "var(--text-dim)",
-                fontFamily: "Space Mono, monospace",
+                fontFamily: "Inter, sans-serif",
                 marginBottom: ".5rem",
               }}
             >
@@ -103,7 +103,7 @@ export default function Dashboard({ session }) {
               borderRadius: "8px",
               padding: "8px 16px",
               cursor: "pointer",
-              fontFamily: "Space Mono, monospace",
+              fontFamily: "Inter, sans-serif",
               fontSize: ".75rem",
               fontWeight: "600",
               color: mostrarLibreta ? "white" : "var(--text-dim)",
@@ -119,7 +119,7 @@ export default function Dashboard({ session }) {
             style={{
               fontSize: ".7rem",
               color: "var(--text-dim)",
-              fontFamily: "Space Mono, monospace",
+              fontFamily: "Inter, sans-serif",
               display: "block",
               marginTop: ".5rem",
             }}
@@ -163,7 +163,7 @@ export default function Dashboard({ session }) {
                   </div>
                   <div
                     style={{
-                      fontFamily: "Space Mono, monospace",
+                      fontFamily: "Inter, sans-serif",
                       fontSize: ".7rem",
                       color: "var(--text-dim)",
                     }}
@@ -187,7 +187,7 @@ export default function Dashboard({ session }) {
                       style={{
                         color: colorAsistencia(pAsistencia),
                         fontWeight: "700",
-                        fontFamily: "Space Mono, monospace",
+                        fontFamily: "Inter, sans-serif",
                       }}
                     >
                       {pAsistencia}%
@@ -228,7 +228,7 @@ export default function Dashboard({ session }) {
                       style={{
                         color: colorPP(pp),
                         fontWeight: "700",
-                        fontFamily: "Space Mono, monospace",
+                        fontFamily: "Inter, sans-serif",
                       }}
                     >
                       {pp}%
@@ -256,7 +256,7 @@ export default function Dashboard({ session }) {
                   style={{
                     fontSize: ".65rem",
                     color: "var(--text-dim)",
-                    fontFamily: "Space Mono, monospace",
+                    fontFamily: "Inter, sans-serif",
                     borderTop: "1px solid var(--border)",
                     paddingTop: ".5rem",
                   }}
@@ -278,6 +278,7 @@ export default function Dashboard({ session }) {
           session={session}
           mapaMaterias={mapaMaterias}
           onClose={() => setModalMateria(null)}
+          onNavigate={(m) => setModalMateria(m)} // nuevo prop, abre la materia clickeada en un nuevo modal
         />
       )}
     </div>

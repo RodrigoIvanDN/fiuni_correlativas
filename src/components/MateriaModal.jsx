@@ -3,7 +3,7 @@ import { apiFetch } from "../api";
 import { ESTADO_LABELS } from "../constants";
 import { limpiarNombre } from "../utils/limpiarNombre";
 
-//Constantes de notas, falta verificar
+//constantes de notas
 const NOTAS = [
   { nota: 5, pcMin: 90 },
   { nota: 4, pcMin: 80 },
@@ -96,7 +96,7 @@ function Seccion({ titulo, children, defaultAbierta = false }) {
             textTransform: "uppercase",
             letterSpacing: "2px",
             color: "var(--accent)",
-            fontFamily: "Space Mono, monospace",
+            fontFamily: "Inter, sans-serif",
             fontWeight: "700",
           }}
         >
@@ -118,12 +118,13 @@ export default function MateriaModal({
   session,
   mapaMaterias, // para obtener correlativas
   onClose,
+  onNavigate, // agrego nuevo prop para navegar entre modales al clickear una materia  en la parte de "necesita aprobadas" y "habilita"
 }) {
   const [asistencia, setAsistencia] = useState(null);
   const [cargandoAsist, setCargandoAsist] = useState(false);
   const [faltasCargadas, setFaltasCargadas] = useState(false);
 
-  if (!materia) return null;
+  if (!materia) return null;  
 
   const { nombre: nombreRaw, id, semestre: semestreRaw, creditos, estado } = materia;
   const nombre = limpiarNombre(nombreRaw);
@@ -260,7 +261,7 @@ export default function MateriaModal({
           style={{
             fontSize: ".7rem",
             color: "var(--text-dim)",
-            fontFamily: "Space Mono, monospace",
+            fontFamily: "Inter, sans-serif",
             marginBottom: "1.25rem",
           }}
         >
@@ -269,7 +270,7 @@ export default function MateriaModal({
           {periodo ? ` · ${periodo}` : ""}
         </div>
 
-        {/* ─── SECCIÓN: PP y ASISTENCIA ────────────────────────────────────── */}
+        {/* pp y asistencias*/}
         {tienePP ? (
           <div
             style={{
@@ -292,7 +293,7 @@ export default function MateriaModal({
                 style={{
                   fontSize: ".65rem",
                   color: "var(--text-dim)",
-                  fontFamily: "Space Mono, monospace",
+                  fontFamily: "Inter, sans-serif",
                   marginBottom: "4px",
                 }}
               >
@@ -303,7 +304,7 @@ export default function MateriaModal({
                   fontSize: "1.6rem",
                   fontWeight: "800",
                   color: colorPP(pp),
-                  fontFamily: "Space Mono, monospace",
+                  fontFamily: "Inter, sans-serif",
                 }}
               >
                 {pp}%
@@ -312,7 +313,7 @@ export default function MateriaModal({
                 style={{
                   fontSize: ".65rem",
                   color: colorPP(pp),
-                  fontFamily: "Space Mono, monospace",
+                  fontFamily: "Inter, sans-serif",
                   marginTop: "2px",
                 }}
               >
@@ -339,7 +340,7 @@ export default function MateriaModal({
                 style={{
                   fontSize: ".65rem",
                   color: "var(--text-dim)",
-                  fontFamily: "Space Mono, monospace",
+                  fontFamily: "Inter, sans-serif",
                   marginBottom: "4px",
                 }}
               >
@@ -350,7 +351,7 @@ export default function MateriaModal({
                   fontSize: "1.6rem",
                   fontWeight: "800",
                   color: colorAsistencia(asistPct),
-                  fontFamily: "Space Mono, monospace",
+                  fontFamily: "Inter, sans-serif",
                 }}
               >
                 {asistPct}%
@@ -359,7 +360,7 @@ export default function MateriaModal({
                 style={{
                   fontSize: ".65rem",
                   color: colorAsistencia(asistPct),
-                  fontFamily: "Space Mono, monospace",
+                  fontFamily: "Inter, sans-serif",
                   marginTop: "2px",
                 }}
               >
@@ -376,7 +377,7 @@ export default function MateriaModal({
             style={{
               fontSize: ".8rem",
               color: "var(--text-dim)",
-              fontFamily: "Space Mono, monospace",
+              fontFamily: "Inter, sans-serif",
               padding: "1rem",
               background: "var(--bg2)",
               borderRadius: "8px",
@@ -395,7 +396,7 @@ export default function MateriaModal({
               style={{
                 fontSize: ".65rem",
                 color: "var(--text-dim)",
-                fontFamily: "Space Mono, monospace",
+                fontFamily: "Inter, sans-serif",
                 marginBottom: "10px",
               }}
             >
@@ -419,7 +420,7 @@ export default function MateriaModal({
                   <span style={{ fontWeight: "700" }}>Nota {nota}</span>
                   <span
                     style={{
-                      fontFamily: "Space Mono, monospace",
+                      fontFamily: "Inter, sans-serif",
                       color: imposible
                         ? "var(--bloqueada-t)"
                         : "var(--text-dim)",
@@ -444,7 +445,7 @@ export default function MateriaModal({
                   style={{
                     fontSize: ".65rem",
                     color: "var(--accent)",
-                    fontFamily: "Space Mono, monospace",
+                    fontFamily: "Inter, sans-serif",
                     marginBottom: "6px",
                   }}
                 >
@@ -454,19 +455,26 @@ export default function MateriaModal({
                   {correlativas.map((cid) => {
                     const m = mapaIds[cid];
                     const ok = m?.estado === "aprobada";
+                    const clickable = m && onNavigate;
                     return (
                       <span
                         key={cid}
+                        onClick={() => {
+                          if (!clickable) return;
+                          onClose();
+                          onNavigate(m); // te lleva al modal de la materia cickeada
+                        }}
                         style={{
                           padding: "2px 10px",
                           borderRadius: "20px",
                           fontSize: ".7rem",
-                          fontFamily: "Space Mono, monospace",
-                          background: ok
+                          fontFamily: "Inter, sans-serif",
+                          background: ok  
                             ? "rgba(29,185,84,0.15)"
                             : "rgba(255,77,77,0.1)",
                           border: `1px solid ${ok ? "var(--aprobada)" : "var(--bloqueada-t)"}`,
                           color: ok ? "var(--aprobada)" : "var(--bloqueada-t)",
+                          cursor: clickable ? "pointer" : "default",
                         }}
                       >
                         {ok ? "✓" : "✕"} {m ? m.nombre : cid}
@@ -484,7 +492,7 @@ export default function MateriaModal({
                   style={{
                     fontSize: ".65rem",
                     color: "var(--accent)",
-                    fontFamily: "Space Mono, monospace",
+                    fontFamily: "Inter, sans-serif",
                     marginBottom: "6px",
                   }}
                 >
@@ -495,19 +503,26 @@ export default function MateriaModal({
                     const m = mapaIds[cid];
                     const ok =
                       m?.estado === "aprobada" || m?.estado === "cursando";
+                    const clickable = m && onNavigate;
                     return (
                       <span
                         key={cid}
+                        onClick={() => {
+                          if (!clickable) return;
+                          onClose();
+                          onNavigate(m);
+                        }}
                         style={{
                           padding: "2px 10px",
                           borderRadius: "20px",
                           fontSize: ".7rem",
-                          fontFamily: "Space Mono, monospace",
+                          fontFamily: "Inter, sans-serif",
                           background: ok
                             ? "rgba(29,185,84,0.15)"
                             : "rgba(255,77,77,0.1)",
                           border: `1px solid ${ok ? "var(--aprobada)" : "var(--bloqueada-t)"}`,
                           color: ok ? "var(--aprobada)" : "var(--bloqueada-t)",
+                          cursor: clickable ? "pointer" : "default",
                         }}
                       >
                         {ok ? "✓" : "✕"} {m ? m.nombre : cid}
@@ -525,7 +540,7 @@ export default function MateriaModal({
                   style={{
                     fontSize: ".65rem",
                     color: "var(--accent)",
-                    fontFamily: "Space Mono, monospace",
+                    fontFamily: "Inter, sans-serif",
                     marginBottom: "6px",
                   }}
                 >
@@ -535,14 +550,19 @@ export default function MateriaModal({
                   {desbloquea.map((m) => (
                     <span
                       key={m.id}
+                      onClick={() => {
+                        if (!onNavigate) return;
+                        onClose();
+                        onNavigate(m);
+                      }}
                       style={{
                         padding: "2px 10px",
                         borderRadius: "20px",
                         fontSize: ".7rem",
-                        fontFamily: "Space Mono, monospace",
+                        fontFamily: "Inter, sans-serif",
                         background: "rgba(29,185,84,0.1)",
-                        border: "1px solid var(--accent)",
-                        color: "var(--accent)",
+                        border: "1px solid var(--aprobada)",
+                        cursor: onNavigate ? "pointer" : "default",
                       }}
                     >
                       {m.nombre}
@@ -568,7 +588,7 @@ export default function MateriaModal({
                   cursor: "pointer",
                   fontSize: ".7rem",
                   color: "var(--accent)",
-                  fontFamily: "Space Mono, monospace",
+                  fontFamily: "Inter, sans-serif",
                 }}
               >
                 Cargar faltas
@@ -578,7 +598,7 @@ export default function MateriaModal({
                 style={{
                   fontSize: ".75rem",
                   color: "var(--text-dim)",
-                  fontFamily: "Space Mono, monospace",
+                  fontFamily: "Inter, sans-serif",
                 }}
               >
                 Cargando...
@@ -588,7 +608,7 @@ export default function MateriaModal({
                 style={{
                   fontSize: ".75rem",
                   color: "var(--bloqueada-t)",
-                  fontFamily: "Space Mono, monospace",
+                  fontFamily: "Inter, sans-serif",
                 }}
               >
                 No se pudo cargar la asistencia
@@ -599,7 +619,7 @@ export default function MateriaModal({
                   style={{
                     fontSize: ".7rem",
                     color: "var(--text-dim)",
-                    fontFamily: "Space Mono, monospace",
+                    fontFamily: "Inter, sans-serif",
                     marginBottom: "10px",
                   }}
                 >
@@ -611,7 +631,7 @@ export default function MateriaModal({
                     style={{
                       fontSize: ".75rem",
                       color: "var(--aprobada)",
-                      fontFamily: "Space Mono, monospace",
+                      fontFamily: "Inter, sans-serif",
                     }}
                   >
                     Sin faltas registradas
@@ -632,7 +652,7 @@ export default function MateriaModal({
                       <span
                         style={{
                           color: "var(--bloqueada-t)",
-                          fontFamily: "Space Mono, monospace",
+                          fontFamily: "Inter, sans-serif",
                           fontSize: ".65rem",
                         }}
                       >
@@ -641,7 +661,7 @@ export default function MateriaModal({
                       <span
                         style={{
                           color: "var(--text-dim)",
-                          fontFamily: "Space Mono, monospace",
+                          fontFamily: "Inter, sans-serif",
                         }}
                       >
                         {formatFecha(c.date)}

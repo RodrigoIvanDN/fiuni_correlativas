@@ -14,7 +14,7 @@
   text-transform: uppercase;
   letter-spacing: 3px;
   color: var(--text-dim);
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
   margin-bottom: 0.5rem;
 }
 .calendario-titulo {
@@ -69,7 +69,7 @@
   position: absolute;
   top: -4px;
   right: -4px;
-  background: var(--accent);
+  background: var(--bloqueada-t);
   color: #fff;
   border-radius: 50%;
   width: 18px;
@@ -94,13 +94,13 @@
   max-height: 300px;
   overflow-y: auto;
   z-index: 300;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 .noti-titulo {
   font-size: 0.65rem;
   color: var(--accent);
   margin-bottom: 0.5rem;
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
 }
 .noti-item {
@@ -126,7 +126,7 @@
   border: 1px solid var(--border2);
   background: var(--bg3);
   color: var(--text);
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(0.65rem, 2vw, 0.7rem);
   flex: 1 1 auto;
 }
@@ -141,7 +141,7 @@
   letter-spacing: 2px;
   color: var(--accent);
   margin-bottom: 1rem;
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
 }
 .proximos-lista {
   display: flex;
@@ -155,7 +155,7 @@
   text-align: center;
   background: var(--bg3);
   border-radius: 8px;
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
 }
 .proximo-card {
   display: flex;
@@ -206,7 +206,7 @@
   padding: 0.25rem 0.5rem;
   border-radius: 20px;
   color: #000;
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
 }
 
@@ -216,7 +216,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0,0,0,0.8);
   z-index: 400;
   display: flex;
   align-items: center;
@@ -250,7 +250,7 @@
   font-size: 1.2rem;
 }
 
-/* Campos del formulario */
+/* Campos del formulario (hereda .field de main.css, pero por si acaso) */
 .modal-contenido .field {
   margin-bottom: 1.25rem;
 }
@@ -261,7 +261,7 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 0.5rem;
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
   font-weight: 500;
 }
 .modal-contenido .field input,
@@ -273,71 +273,45 @@
   border-radius: var(--radius);
   padding: 0.8rem 1rem;
   color: var(--text);
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   outline: none;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 .modal-contenido .field textarea {
   resize: vertical;
 }
-
-/* Foco unificado (carmesí) */
 .modal-contenido .field input:focus,
 .modal-contenido .field textarea:focus,
 .modal-contenido .field select:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.2);
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+[data-theme="dark"] .modal-contenido .field input:focus,
+[data-theme="dark"] .modal-contenido .field textarea:focus,
+[data-theme="dark"] .modal-contenido .field select:focus {
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
 }
 
-/* =============================================
-   BOTONES DEL FORMULARIO (TEXTO = COLOR BORDE, BLANCO EN HOVER)
-   ============================================= */
+/* Botones del formulario */
 .modal-actions {
   display: flex;
   gap: 0.5rem;
   margin-top: 1.5rem;
 }
-
-/* Estilo base para botones: Actualizar, Eliminar, Crear, etc. */
-.modal-actions .btn-primary,
-.modal-actions .btn-eliminar {
+.modal-actions .btn-primary {
   flex: 1;
+}
+.modal-actions .btn-eliminar {
   padding: 0.9rem;
   border-radius: 500px;
-  border: 2px solid var(--accent, #dc143c);
+  border: 1px solid var(--bloqueada-t);
   background: transparent;
-  color: var(--accent, #dc143c) !important;  /* Fuerza el color del borde */
-  font-family: "Space Mono", monospace;
+  color: var(--bloqueada-t);
+  font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
-  letter-spacing: 0.5px;
-}
-
-/* Hover: fondo sólido, texto blanco */
-.modal-actions .btn-primary:hover,
-.modal-actions .btn-eliminar:hover {
-  background: var(--accent, #dc143c);
-  color: white !important;  /* Fuerza blanco */
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.modal-actions .btn-primary:active,
-.modal-actions .btn-eliminar:active {
-  transform: translateY(1px);
-  box-shadow: none;
-}
-
-.modal-actions .btn-primary:focus-visible,
-.modal-actions .btn-eliminar:focus-visible {
-  outline: 2px solid var(--accent, #dc143c);
-  outline-offset: 2px;
+  font-weight: 600;
 }
 
 /* Mini calendario */
@@ -351,7 +325,7 @@
   border: 1px solid var(--border2);
   border-radius: var(--radius);
   color: var(--text);
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   cursor: pointer;
   text-align: left;
@@ -373,7 +347,7 @@
   border-radius: 12px;
   padding: 1rem;
   z-index: 500;
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.6);
 }
 .mini-cal-nav {
   display: flex;
@@ -401,14 +375,14 @@
   font-weight: 600;
   color: var(--text-dim);
   padding: 4px 0;
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
 }
 .mini-dia {
   padding: 8px 0;
   text-align: center;
   font-size: 0.75rem;
   font-weight: 400;
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
@@ -418,7 +392,7 @@
 }
 .mini-dia.selected {
   border-color: var(--accent);
-  background: rgba(220, 20, 60, 0.2);
+  background: rgba(29,185,84,0.2);
   font-weight: 700;
   color: var(--accent);
 }
@@ -432,7 +406,7 @@
   color: #ff6b6b;
   font-size: 0.8rem;
   margin-top: 0.75rem;
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   text-align: center;
 }
 
@@ -454,13 +428,11 @@
   animation: spin 0.7s linear infinite;
 }
 .loading-text {
-  font-family: "Space Mono", monospace;
+  font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   color: var(--text-dim);
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }

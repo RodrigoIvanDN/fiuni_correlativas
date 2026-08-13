@@ -393,7 +393,7 @@ export default function Libreta({ session }) {
                             style={{
                               padding: "0.5rem 0.25rem",
                               textAlign: "center",
-                              fontFamily: "monospace",
+                              fontFamily: "Inter, sans-serif",
                             }}
                           >
                             {materia.codigo}
