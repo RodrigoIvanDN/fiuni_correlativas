@@ -10,6 +10,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { apiFetch } from "../api";
+import { supabase } from "../supabaseClient";
+import { construirMapaDesdeSupabase } from "../utils/construirMapaDesdeSupabase";
 import { ESTADO_LABELS } from "../constants";
 import Spinner from "./Spinner";
 import NodoMateria from "./NodoMateria";
@@ -22,22 +24,45 @@ export default function Mapa({ session }) {
   const [modalMateria, setModalMateria] = useState(null); //materia para el modal
   const [historialMaterias, setHistorialMaterias] = useState(null);
 
-  // carga mapa de correlativas
+  // La malla y sus correlativas viven en Supabase; FIUNI solo aporta el estado académico del alumno.
   useEffect(() => {
-    const query = session.carreraId ? `?carrera_id=${session.carreraId}` : "";
-    apiFetch(`/mapa${query}`, { token: session.token })
-      .then(setMapa)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [session.token, session.carreraId]);
+    let cancelado = false;
 
-  // carga el historial del alumno, materias, pp, asistencia
-  useEffect(() => {
-    if (!session?.token) return;
-    apiFetch("/mis-materias", { token: session.token })
-      .then(setHistorialMaterias)
-      .catch(() => setHistorialMaterias([]));
-  }, [session.token]);
+    async function cargarMapa() {
+      try {
+        setLoading(true);
+        setError("");
+        const carreraId = Number(session?.carreraId);
+        if (!Number.isInteger(carreraId)) throw new Error("Carrera no identificada");
+
+        const [{ data: carrera, error: carreraError }, { data: materias, error: materiasError }, actuales, historial] = await Promise.all([
+          supabase.from("carrera").select("id, nombre, version_malla").eq("id", carreraId).single(),
+          supabase.from("materias").select("id, codigo, nombre, semestre, creditos, correlativas, correlativas_regular").eq("carrera_id", carreraId).order("semestre").order("codigo"),
+          apiFetch("/materias", { token: session.token }),
+          apiFetch("/mis-materias", { token: session.token }).catch(() => []),
+        ]);
+        if (carreraError) throw carreraError;
+        if (materiasError) throw materiasError;
+        if (!materias?.length) throw new Error("No hay materias cargadas para esta carrera");
+        if (!cancelado) {
+          setHistorialMaterias(historial || []);
+          setMapa({
+            nombre: `${carrera.nombre}${carrera.version_malla ? ` · Malla ${carrera.version_malla}` : ""}`,
+            materias: construirMapaDesdeSupabase({ materias, actuales, historial }),
+          });
+        }
+      } catch (err) {
+        if (!cancelado) setError(err.message || "No se pudo cargar la malla");
+      } finally {
+        if (!cancelado) setLoading(false);
+      }
+    }
+
+    cargarMapa();
+    return () => {
+      cancelado = true;
+    };
+  }, [session.token, session.carreraId]);
 
   // Memoizar la organización por semestre
   const porSemestre = useMemo(
