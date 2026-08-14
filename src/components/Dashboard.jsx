@@ -6,6 +6,7 @@ import SkeletonLoader from "./SkeletonLoader";
 import MateriaModal from "./MateriaModal";
 import Libreta from "./Libreta";
 import { limpiarNombre } from "../utils/limpiarNombre";
+import { esMateriaCursando } from "../utils/esMateriaCursando";
 
 function colorAsistencia(porcentaje) {
   if (porcentaje >= 75) return "var(--aprobada)";
@@ -35,9 +36,7 @@ export default function Dashboard({ session }) {
   );
   const { data: mapaRaw } = useFetch(mapaQuery, currentSession?.token);
 
-  const materias = (materiasRaw || []).filter(
-    (m) => m.anho === new Date().getFullYear(),
-  );
+  const materias = (materiasRaw || []).filter((materia) => esMateriaCursando(materia));
   const mapaMaterias = mapaRaw?.materias || [];
 
   const [modalMateria, setModalMateria] = useState(null);

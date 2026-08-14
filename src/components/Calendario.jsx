@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { limpiarNombre } from "../utils/limpiarNombre";
+import { esMateriaCursando } from "../utils/esMateriaCursando";
 import { apiFetch, parseJwt } from "../api";
 import "../styles/calendario.css";
 
@@ -211,7 +212,7 @@ export default function Calendario({ session }) {
         const data = await apiFetch("/materias", { token: session.token });
         if (cancelado) return;
         const cursando = data
-          .filter((m) => m.anho === new Date().getFullYear()) // Solo las del año actual
+          .filter((materia) => esMateriaCursando(materia))
           .map((m) => ({ ...m, materia: limpiarNombre(m.materia) })); // Limpiar asteriscos
         setMaterias(cursando);
         const ids = cursando.map((m) => m.codigoMateria);
