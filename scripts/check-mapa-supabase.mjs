@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { construirMapaDesdeSupabase } from "../src/utils/construirMapaDesdeSupabase.js";
+import {
+  construirMapaDesdeSupabase,
+  materiasAprobadasDesdeLibreta,
+} from "../src/utils/construirMapaDesdeSupabase.js";
 
 const mapa = construirMapaDesdeSupabase({
   materias: [
@@ -14,4 +17,18 @@ const mapa = construirMapaDesdeSupabase({
 assert.deepEqual(mapa.map((materia) => materia.estado), ["aprobada", "cursando", "disponible"]);
 assert.deepEqual(mapa[2].correlativas, ["001"]);
 assert.deepEqual(mapa[2].correlativas_regular, ["002"]);
+
+assert.deepEqual(
+  materiasAprobadasDesdeLibreta({
+    calificacionesSemestres: [
+      {
+        calificacionesMaterias: [
+          { materiaCodigo: "001", calificaciones: [{ calificacion: 1 }, { calificacion: 3 }] },
+          { materiaCodigo: "002", calificaciones: [{ calificacion: 1 }] },
+        ],
+      },
+    ],
+  }),
+  [{ codigoMateria: "001", estado: "aprobada" }],
+);
 console.log("CHECK_MAPA_SUPABASE_OK");

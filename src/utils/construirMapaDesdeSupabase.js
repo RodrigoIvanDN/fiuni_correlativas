@@ -18,6 +18,26 @@ function estadoDelRegistro(registro) {
   return null;
 }
 
+export function materiasAprobadasDesdeLibreta(libreta) {
+  const aprobadas = new Map();
+
+  for (const semestre of libreta?.calificacionesSemestres || []) {
+    for (const materia of semestre.calificacionesMaterias || []) {
+      const aprobada = (materia.calificaciones || []).some(
+        (calificacion) => Number(calificacion.calificacion) >= 2,
+      );
+      if (aprobada) {
+        aprobadas.set(claveCodigo(materia.materiaCodigo), {
+          codigoMateria: materia.materiaCodigo,
+          estado: "aprobada",
+        });
+      }
+    }
+  }
+
+  return [...aprobadas.values()];
+}
+
 export function construirMapaDesdeSupabase({ materias, actuales = [], historial = [] }) {
   const porId = new Map(materias.map((materia) => [String(materia.id), materia.codigo]));
   const estados = new Map();

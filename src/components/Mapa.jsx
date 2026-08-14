@@ -11,8 +11,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { apiFetch } from "../api";
 import { supabase } from "../supabaseClient";
-import { construirMapaDesdeSupabase } from "../utils/construirMapaDesdeSupabase";
-import { ESTADO_LABELS } from "../constants";
+import {
+  construirMapaDesdeSupabase,
+  materiasAprobadasDesdeLibreta,
+} from "../utils/construirMapaDesdeSupabase";
 import Spinner from "./Spinner";
 import NodoMateria from "./NodoMateria";
 import MateriaModal from "./MateriaModal";
@@ -35,20 +37,25 @@ export default function Mapa({ session }) {
         const carreraId = Number(session?.carreraId);
         if (!Number.isInteger(carreraId)) throw new Error("Carrera no identificada");
 
-        const [{ data: carrera, error: carreraError }, { data: materias, error: materiasError }, actuales, historial] = await Promise.all([
+        const [{ data: carrera, error: carreraError }, { data: materias, error: materiasError }, actuales, detalleMaterias, libreta] = await Promise.all([
           supabase.from("carrera").select("id, nombre, version_malla").eq("id", carreraId).single(),
           supabase.from("materias").select("id, codigo, nombre, semestre, creditos, correlativas, correlativas_regular").eq("carrera_id", carreraId).order("semestre").order("codigo"),
           apiFetch("/materias", { token: session.token }),
           apiFetch("/mis-materias", { token: session.token }).catch(() => []),
+          apiFetch(`/libreta?carrera_id=${carreraId}`, { token: session.token }),
         ]);
         if (carreraError) throw carreraError;
         if (materiasError) throw materiasError;
         if (!materias?.length) throw new Error("No hay materias cargadas para esta carrera");
         if (!cancelado) {
-          setHistorialMaterias(historial || []);
+          setHistorialMaterias(detalleMaterias || []);
           setMapa({
             nombre: `${carrera.nombre}${carrera.version_malla ? ` · Malla ${carrera.version_malla}` : ""}`,
-            materias: construirMapaDesdeSupabase({ materias, actuales, historial }),
+            materias: construirMapaDesdeSupabase({
+              materias,
+              actuales,
+              historial: materiasAprobadasDesdeLibreta(libreta),
+            }),
           });
         }
       } catch (err) {
