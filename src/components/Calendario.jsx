@@ -201,7 +201,14 @@ export default function Calendario({ session }) {
   // y luego consulta los eventos de esas materias en Supabase.
   // Todo se hace en un solo efecto para evitar parpadeos de carga.
   useEffect(() => {
-    if (!session?.carreraId) return; // Sin carrera no hay nada que cargar
+    if (!session?.carreraId) {
+      setMaterias([]);
+      setMateriasIds([]);
+      setEventos([]);
+      setError("No pudimos identificar tu carrera; solo se muestran los eventos académicos generales.");
+      setLoading(false);
+      return;
+    }
     let cancelado = false;
     setLoading(true);
     setError("");
@@ -293,13 +300,15 @@ export default function Calendario({ session }) {
   // Los eventos oficiales (feriados, inicio/fin de clases, etc.) están en la tabla
   // "calendario_academico" y se muestran a todos los estudiantes de la carrera.
   useEffect(() => {
-    if (!session?.carreraId) return;
     let cancelado = false;
     const cargarOficiales = async () => {
-      const { data, error: eventosOficialesError } = await supabase
+      let consulta = supabase
         .from("calendario_academico")
-        .select("*")
-        .or(`carrera_id.is.null,carrera_id.eq.${session.carreraId}`); // Todas las carreras o la suya
+        .select("*");
+      consulta = session?.carreraId
+        ? consulta.or(`carrera_id.is.null,carrera_id.eq.${session.carreraId}`)
+        : consulta.is("carrera_id", null);
+      const { data, error: eventosOficialesError } = await consulta;
       if (eventosOficialesError) {
         if (!cancelado) setError(eventosOficialesError.message);
         return;
@@ -531,6 +540,7 @@ export default function Calendario({ session }) {
           Calendario
         </h1>
       </div>
+      {error && <div className="error-msg" style={{ marginBottom: "1rem" }}>{error}</div>}
 
       {/* ─── BARRA DE CONTROLES ────────────────────────────────────────── */}
       <div
@@ -669,6 +679,8 @@ export default function Calendario({ session }) {
               setEventoEditando(null); // null = modo creación
               setMostrarModal(true);
             }}
+            disabled={!session?.carreraId || materias.length === 0}
+            title={!session?.carreraId || materias.length === 0 ? "No hay materias disponibles para crear un evento" : undefined}
             style={{
               padding: "0.5rem 1rem",
               borderRadius: "8px",
@@ -676,7 +688,8 @@ export default function Calendario({ session }) {
               background: "var(--accent)",
               color: "#000",
               fontWeight: "600",
-              cursor: "pointer",
+              cursor: !session?.carreraId || materias.length === 0 ? "not-allowed" : "pointer",
+              opacity: !session?.carreraId || materias.length === 0 ? 0.5 : 1,
               fontFamily: "Space Mono, monospace",
               fontSize: "0.75rem",
             }}
