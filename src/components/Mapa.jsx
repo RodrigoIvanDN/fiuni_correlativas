@@ -38,19 +38,24 @@ export default function Mapa({ session }) {
         const carreraIdFiuni = Number(session?.carreraId);
         if (!Number.isInteger(carreraIdFiuni)) throw new Error("Carrera no identificada");
 
-        const [{ data: carreras, error: carrerasError }, actuales, detalleMaterias] = await Promise.all([
+        const [{ data: carreras, error: carrerasError }, { data: materiasCatalogo, error: materiasCatalogoError }, actuales, detalleMaterias, mapaFiuni] = await Promise.all([
           supabase.from("carrera").select("id, nombre, version_malla"),
+          supabase.from("materias").select("carrera_id, nombre"),
           apiFetch("/materias", { token: session.token }),
           apiFetch("/mis-materias", { token: session.token }).catch(() => []),
+          apiFetch(`/mapa?carrera_id=${carreraIdFiuni}`, { token: session.token }).catch(() => ({ materias: [] })),
         ]);
         if (carrerasError) throw carrerasError;
-        const carrera = resolverCarreraSupabase(carreras || [], carreraIdFiuni, session?.carrera);
+        if (materiasCatalogoError) throw materiasCatalogoError;
+        const carrera = resolverCarreraSupabase(
+          carreras || [], carreraIdFiuni, session?.carrera, materiasCatalogo,
+          mapaFiuni?.materias,
+        );
         if (!carrera) throw new Error("No hay malla cargada para tu carrera");
 
-        const [{ data: materias, error: materiasError }, libreta, mapaFiuni] = await Promise.all([
+        const [{ data: materias, error: materiasError }, libreta] = await Promise.all([
           supabase.from("materias").select("id, codigo, nombre, semestre, creditos, correlativas, correlativas_regular").eq("carrera_id", carrera.id).order("semestre").order("codigo"),
           apiFetch(`/libreta?carrera_id=${carreraIdFiuni}`, { token: session.token }),
-          apiFetch(`/mapa?carrera_id=${carreraIdFiuni}`, { token: session.token }).catch(() => ({ materias: [] })),
         ]);
         if (materiasError) throw materiasError;
         if (!materias?.length) throw new Error("No hay materias cargadas para esta carrera");

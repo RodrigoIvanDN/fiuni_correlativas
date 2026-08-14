@@ -53,4 +53,14 @@ assert.equal(
   )?.id,
   5,
 );
+assert.equal(
+  resolverCarreraSupabase(
+    [{ id: 1, nombre: "IngenierÃ­a InformÃ¡tica" }, { id: 5, nombre: "IngenierÃ­a Industrial" }],
+    99,
+    null,
+    [{ carrera_id: 1, nombre: "ProgramaciÃ³n I" }, { carrera_id: 5, nombre: "Resistencia de Materiales" }],
+    [{ nombre: "Resistencia de Materiales" }],
+  )?.id,
+  5,
+);
 console.log("CHECK_MAPA_SUPABASE_OK");
