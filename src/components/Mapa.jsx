@@ -10,12 +10,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { apiFetch } from "../api";
-import { supabase } from "../supabaseClient";
-import {
-  construirMapaDesdeSupabase,
-  materiasAprobadasDesdeLibreta,
-} from "../utils/construirMapaDesdeSupabase";
-import { resolverCarreraSupabase } from "../utils/resolverCarreraSupabase";
+import { ESTADO_LABELS } from "../constants";
 import Spinner from "./Spinner";
 import NodoMateria from "./NodoMateria";
 import MateriaModal from "./MateriaModal";
@@ -27,64 +22,22 @@ export default function Mapa({ session }) {
   const [modalMateria, setModalMateria] = useState(null); //materia para el modal
   const [historialMaterias, setHistorialMaterias] = useState(null);
 
-  // La malla y sus correlativas viven en Supabase; FIUNI solo aporta el estado académico del alumno.
+  // carga mapa de correlativas
   useEffect(() => {
-    let cancelado = false;
-
-    async function cargarMapa() {
-      try {
-        setLoading(true);
-        setError("");
-        const carreraIdFiuni = Number(session?.carreraId);
-        if (!Number.isInteger(carreraIdFiuni)) throw new Error("Carrera no identificada");
-
-        const [{ data: carreras, error: carrerasError }, { data: materiasCatalogo, error: materiasCatalogoError }, actuales, detalleMaterias, mapaFiuni] = await Promise.all([
-          supabase.from("carrera").select("id, nombre, version_malla"),
-          supabase.from("materias").select("carrera_id, nombre"),
-          apiFetch("/materias", { token: session.token }),
-          apiFetch("/mis-materias", { token: session.token }).catch(() => []),
-          apiFetch(`/mapa?carrera_id=${carreraIdFiuni}`, { token: session.token }).catch(() => ({ materias: [] })),
-        ]);
-        if (carrerasError) throw carrerasError;
-        if (materiasCatalogoError) throw materiasCatalogoError;
-        const carrera = resolverCarreraSupabase(
-          carreras || [], carreraIdFiuni, session?.carrera, materiasCatalogo,
-          mapaFiuni?.materias,
-        );
-        if (!carrera) throw new Error("No hay malla cargada para tu carrera");
-
-        const [{ data: materias, error: materiasError }, libreta] = await Promise.all([
-          supabase.from("materias").select("id, codigo, nombre, semestre, creditos, correlativas, correlativas_regular").eq("carrera_id", carrera.id).order("semestre").order("codigo"),
-          apiFetch(`/libreta?carrera_id=${carreraIdFiuni}`, { token: session.token }),
-        ]);
-        if (materiasError) throw materiasError;
-        if (!materias?.length) throw new Error("No hay materias cargadas para esta carrera");
-        if (!cancelado) {
-          setHistorialMaterias(detalleMaterias || []);
-          setMapa({
-            nombre: `${carrera.nombre}${carrera.version_malla ? ` · Malla ${carrera.version_malla}` : ""}`,
-            materias: construirMapaDesdeSupabase({
-              materias,
-              actuales,
-              historial: [
-                ...materiasAprobadasDesdeLibreta(libreta),
-                ...(mapaFiuni?.materias || []),
-              ],
-            }),
-          });
-        }
-      } catch (err) {
-        if (!cancelado) setError(err.message || "No se pudo cargar la malla");
-      } finally {
-        if (!cancelado) setLoading(false);
-      }
-    }
-
-    cargarMapa();
-    return () => {
-      cancelado = true;
-    };
+    const query = session.carreraId ? `?carrera_id=${session.carreraId}` : "";
+    apiFetch(`/mapa${query}`, { token: session.token })
+      .then(setMapa)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, [session.token, session.carreraId]);
+
+  // carga el historial del alumno, materias, pp, asistencia
+  useEffect(() => {
+    if (!session?.token) return;
+    apiFetch("/mis-materias", { token: session.token })
+      .then(setHistorialMaterias)
+      .catch(() => setHistorialMaterias([]));
+  }, [session.token]);
 
   // Memoizar la organización por semestre
   const porSemestre = useMemo(

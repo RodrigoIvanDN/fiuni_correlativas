@@ -7,7 +7,6 @@
     "dev:tercer-semestre": "vite --mode tercer-semestre",
     "mock:tercer-semestre": "node scripts/mock-tercer-semestre.mjs",
     "check:tercer-semestre": "node scripts/check-tercer-semestre.mjs",
-    "check:mapa-supabase": "node scripts/check-mapa-supabase.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },
