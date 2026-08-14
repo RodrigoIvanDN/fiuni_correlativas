@@ -15,6 +15,7 @@ import {
   construirMapaDesdeSupabase,
   materiasAprobadasDesdeLibreta,
 } from "../utils/construirMapaDesdeSupabase";
+import { resolverCarreraSupabase } from "../utils/resolverCarreraSupabase";
 import Spinner from "./Spinner";
 import NodoMateria from "./NodoMateria";
 import MateriaModal from "./MateriaModal";
@@ -34,18 +35,23 @@ export default function Mapa({ session }) {
       try {
         setLoading(true);
         setError("");
-        const carreraId = Number(session?.carreraId);
-        if (!Number.isInteger(carreraId)) throw new Error("Carrera no identificada");
+        const carreraIdFiuni = Number(session?.carreraId);
+        if (!Number.isInteger(carreraIdFiuni)) throw new Error("Carrera no identificada");
 
-        const [{ data: carrera, error: carreraError }, { data: materias, error: materiasError }, actuales, detalleMaterias, libreta, mapaFiuni] = await Promise.all([
-          supabase.from("carrera").select("id, nombre, version_malla").eq("id", carreraId).single(),
-          supabase.from("materias").select("id, codigo, nombre, semestre, creditos, correlativas, correlativas_regular").eq("carrera_id", carreraId).order("semestre").order("codigo"),
+        const [{ data: carreras, error: carrerasError }, actuales, detalleMaterias] = await Promise.all([
+          supabase.from("carrera").select("id, nombre, version_malla"),
           apiFetch("/materias", { token: session.token }),
           apiFetch("/mis-materias", { token: session.token }).catch(() => []),
-          apiFetch(`/libreta?carrera_id=${carreraId}`, { token: session.token }),
-          apiFetch(`/mapa?carrera_id=${carreraId}`, { token: session.token }).catch(() => ({ materias: [] })),
         ]);
-        if (carreraError) throw carreraError;
+        if (carrerasError) throw carrerasError;
+        const carrera = resolverCarreraSupabase(carreras || [], carreraIdFiuni, session?.carrera);
+        if (!carrera) throw new Error("No hay malla cargada para tu carrera");
+
+        const [{ data: materias, error: materiasError }, libreta, mapaFiuni] = await Promise.all([
+          supabase.from("materias").select("id, codigo, nombre, semestre, creditos, correlativas, correlativas_regular").eq("carrera_id", carrera.id).order("semestre").order("codigo"),
+          apiFetch(`/libreta?carrera_id=${carreraIdFiuni}`, { token: session.token }),
+          apiFetch(`/mapa?carrera_id=${carreraIdFiuni}`, { token: session.token }).catch(() => ({ materias: [] })),
+        ]);
         if (materiasError) throw materiasError;
         if (!materias?.length) throw new Error("No hay materias cargadas para esta carrera");
         if (!cancelado) {

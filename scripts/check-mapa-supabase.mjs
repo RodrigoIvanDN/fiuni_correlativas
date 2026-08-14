@@ -3,6 +3,7 @@ import {
   construirMapaDesdeSupabase,
   materiasAprobadasDesdeLibreta,
 } from "../src/utils/construirMapaDesdeSupabase.js";
+import { resolverCarreraSupabase } from "../src/utils/resolverCarreraSupabase.js";
 
 const mapa = construirMapaDesdeSupabase({
   materias: [
@@ -42,5 +43,14 @@ assert.deepEqual(
     ],
   }),
   [{ codigoMateria: "001", estado: "aprobada" }],
+);
+
+assert.equal(
+  resolverCarreraSupabase(
+    [{ id: 5, nombre: "IngenierÃ­a Industrial" }],
+    99,
+    "IngenierÃ­a Industrial",
+  )?.id,
+  5,
 );
 console.log("CHECK_MAPA_SUPABASE_OK");
