@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:tercer-semestre": "vite --mode tercer-semestre",
+    "mock:tercer-semestre": "node scripts/mock-tercer-semestre.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },
