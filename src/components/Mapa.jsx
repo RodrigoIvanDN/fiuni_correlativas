@@ -37,12 +37,13 @@ export default function Mapa({ session }) {
         const carreraId = Number(session?.carreraId);
         if (!Number.isInteger(carreraId)) throw new Error("Carrera no identificada");
 
-        const [{ data: carrera, error: carreraError }, { data: materias, error: materiasError }, actuales, detalleMaterias, libreta] = await Promise.all([
+        const [{ data: carrera, error: carreraError }, { data: materias, error: materiasError }, actuales, detalleMaterias, libreta, mapaFiuni] = await Promise.all([
           supabase.from("carrera").select("id, nombre, version_malla").eq("id", carreraId).single(),
           supabase.from("materias").select("id, codigo, nombre, semestre, creditos, correlativas, correlativas_regular").eq("carrera_id", carreraId).order("semestre").order("codigo"),
           apiFetch("/materias", { token: session.token }),
           apiFetch("/mis-materias", { token: session.token }).catch(() => []),
           apiFetch(`/libreta?carrera_id=${carreraId}`, { token: session.token }),
+          apiFetch(`/mapa?carrera_id=${carreraId}`, { token: session.token }).catch(() => ({ materias: [] })),
         ]);
         if (carreraError) throw carreraError;
         if (materiasError) throw materiasError;
@@ -54,7 +55,10 @@ export default function Mapa({ session }) {
             materias: construirMapaDesdeSupabase({
               materias,
               actuales,
-              historial: materiasAprobadasDesdeLibreta(libreta),
+              historial: [
+                ...materiasAprobadasDesdeLibreta(libreta),
+                ...(mapaFiuni?.materias || []),
+              ],
             }),
           });
         }

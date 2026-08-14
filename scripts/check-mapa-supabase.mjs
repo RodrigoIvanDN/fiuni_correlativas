@@ -18,6 +18,18 @@ assert.deepEqual(mapa.map((materia) => materia.estado), ["aprobada", "cursando",
 assert.deepEqual(mapa[2].correlativas, ["001"]);
 assert.deepEqual(mapa[2].correlativas_regular, ["002"]);
 
+const mapaPorNombre = construirMapaDesdeSupabase({
+  materias: [
+    { id: 1, codigo: "332", nombre: "Análisis Matemático I", semestre: 1, correlativas: [], correlativas_regular: [] },
+    { id: 2, codigo: "322", nombre: "Física I", semestre: 1, correlativas: [], correlativas_regular: [] },
+  ],
+  historial: [
+    { id: "1", nombre: "Analisis Matematico I", estado: "aprobada" },
+    { id: "2", nombre: "Física I", estado: "aprobada" },
+  ],
+});
+assert.deepEqual(mapaPorNombre.map((materia) => materia.estado), ["aprobada", "aprobada"]);
+
 assert.deepEqual(
   materiasAprobadasDesdeLibreta({
     calificacionesSemestres: [

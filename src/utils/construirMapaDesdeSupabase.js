@@ -8,6 +8,13 @@ const ESTADOS_FINALES = new Set([
 ]);
 
 const claveCodigo = (codigo) => String(codigo ?? "").trim().replace(/^0+(?=\d)/, "");
+const claveNombre = (nombre) =>
+  String(nombre ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\*/g, "")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toLowerCase();
 
 function estadoDelRegistro(registro) {
   const estado = String(registro?.estado ?? "").trim().toLowerCase();
@@ -40,10 +47,15 @@ export function materiasAprobadasDesdeLibreta(libreta) {
 
 export function construirMapaDesdeSupabase({ materias, actuales = [], historial = [] }) {
   const porId = new Map(materias.map((materia) => [String(materia.id), materia.codigo]));
+  const codigosMalla = new Set(materias.map((materia) => claveCodigo(materia.codigo)));
+  const porNombre = new Map(materias.map((materia) => [claveNombre(materia.nombre), materia.codigo]));
   const estados = new Map();
 
   for (const registro of [...historial, ...actuales]) {
-    const codigo = claveCodigo(registro.codigoMateria ?? registro.materiaCodigo ?? registro.codigo);
+    const codigoOriginal = claveCodigo(registro.codigoMateria ?? registro.materiaCodigo ?? registro.codigo);
+    const codigo = codigosMalla.has(codigoOriginal)
+      ? codigoOriginal
+      : claveCodigo(porNombre.get(claveNombre(registro.nombreMateria ?? registro.materia ?? registro.nombre)));
     const estado = estadoDelRegistro(registro);
     if (!codigo || !estado || estados.get(codigo) === "aprobada") continue;
     estados.set(codigo, estado);
