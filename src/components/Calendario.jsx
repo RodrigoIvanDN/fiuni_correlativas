@@ -186,7 +186,7 @@ export default function Calendario({ session }) {
   const [error, setError] = useState(""); // Mensaje de error global
 
   const [fechaActual, setFechaActual] = useState(new Date()); // Fecha de referencia para la vista
-  const [vista, setVista] = useState("mensual"); // "mensual" o "semanal"
+  const [vista, setVista] = useState("semanal"); // "mensual" o "semanal"
 
   const [mostrarModal, setMostrarModal] = useState(false); // Controla el modal de crear/editar
   const [eventoEditando, setEventoEditando] = useState(null); // Evento que se está editando (null = nuevo)
